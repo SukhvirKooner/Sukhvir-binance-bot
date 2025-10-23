@@ -73,16 +73,6 @@ python -m src.cli place --symbol BTCUSDT --side SELL --type STOP_LIMIT --price 4
 python -m src.cli place --symbol BTCUSDT --side BUY --type OCO --price 52000 --stop-price 48000 --quantity 0.01
 ```
 
-#### Query Order Status
-```bash
-python -m src.cli status --symbol BTCUSDT --order-id 123456
-```
-
-#### Cancel Orders
-```bash
-python -m src.cli cancel --symbol BTCUSDT --order-id 123456
-```
-
 ### Advanced Features
 
 #### TWAP Simulation
