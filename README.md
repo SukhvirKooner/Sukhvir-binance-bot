@@ -64,13 +64,13 @@ A comprehensive CLI-based trading bot for Binance USDT-M Futures (Testnet) that 
 python -m src.cli place --symbol BTCUSDT --side BUY --type MARKET --quantity 0.001
 
 # Limit sell order
-python -m src.cli place --symbol ETHUSDT --side SELL --type LIMIT --price 1600 --quantity 0.01 --time-in-force GTC
+python -m src.cli place --symbol ETHUSDT --side SELL --type LIMIT --price 4600 --quantity 0.01 --time-in-force GTC
 
 # Stop-limit order
-python -m src.cli place --symbol BTCUSDT --side BUY --type STOP_LIMIT --price 50000 --stop-price 49000 --quantity 0.001
+python -m src.cli place --symbol BTCUSDT --side SELL --type STOP_LIMIT --price 45000 --stop-price 46000 --quantity 0.003
 
 # OCO order (take profit + stop loss)
-python -m src.cli place --symbol BTCUSDT --side BUY --type OCO --price 52000 --stop-price 48000 --quantity 0.001
+python -m src.cli place --symbol BTCUSDT --side BUY --type OCO --price 52000 --stop-price 48000 --quantity 0.01
 ```
 
 #### Query Order Status
@@ -182,22 +182,6 @@ The bot implements comprehensive error handling with proper exit codes:
 | 3 | API error (authentication, network) |
 | 4 | Runtime error |
 
-## Testing
-
-### Run Unit Tests
-```bash
-pytest tests/ -v
-```
-
-### Run Integration Tests
-```bash
-pytest tests/test_integration.py -v
-```
-
-### Run with Coverage
-```bash
-pytest tests/ --cov=src --cov-report=html
-```
 
 ## Project Structure
 
@@ -224,25 +208,11 @@ binance-bot/
 │       ├── __init__.py
 │       ├── logger.py          # Structured logging
 │       └── retry.py           # Retry decorator
-├── tests/
-│   ├── __init__.py
-│   ├── test_validators.py     # Validator tests
-│   ├── test_models.py         # Model tests
-│   ├── test_binance_client.py # Client tests
-│   ├── test_orders.py         # Order tests
-│   └── test_integration.py    # Integration tests
 ├── requirements.txt           # Dependencies
 ├── README.md                  # This file
 └── bot.log                    # Log file (created at runtime)
 ```
 
-## Security Notes
-
-- **Never use production API keys** - This bot is designed for testnet only
-- **API secrets are automatically sanitized** in logs
-- **Environment variables** are used for sensitive configuration
-- **Input validation** prevents malicious input
-- **Rate limiting** is handled by the Binance client
 
 ## Examples
 
@@ -276,34 +246,3 @@ python -m src.cli simulate-twap --symbol BTCUSDT --side BUY --total-quantity 1.0
 python -m src.cli simulate-grid --symbol BTCUSDT --side BUY --total-quantity 1.0 --min-price 40000 --max-price 50000 --num-levels 20
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-1. **API Key Errors**: Ensure you're using testnet credentials
-2. **Validation Errors**: Check symbol format and quantity precision
-3. **Network Errors**: The bot includes automatic retry logic
-4. **Logging Issues**: Check file permissions for `bot.log`
-
-### Getting Help
-
-1. Check the logs in `bot.log` for detailed error information
-2. Use `--verbose` flag for debug-level logging
-3. Use `--dry-run` flag to validate orders without placing them
-4. Review the test cases for usage examples
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## License
-
-This project is for educational purposes only. Use at your own risk.
-
-## Disclaimer
-
-This software is for educational and testing purposes only. Trading cryptocurrencies involves substantial risk of loss. The authors are not responsible for any financial losses incurred through the use of this software.

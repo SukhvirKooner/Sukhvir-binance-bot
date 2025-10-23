@@ -75,24 +75,49 @@ class OCOOrder:
             if side.upper() not in ["BUY", "SELL"]:
                 raise ValidationError(f"Invalid side for OCO order: {side}")
             
-            # For OCO orders, we need to use the futures_create_oco_order method
-            # This is a more complex order type that combines a limit order with a stop order
+            # Binance Futures doesn't support OCO orders directly
+            # We implement OCO functionality by placing separate limit and stop orders
+            # The limit order (take profit) and stop order (stop loss) will be placed separately
             
-            order_params = {
+            # First, place the limit order (take profit)
+            limit_order_params = {
                 "symbol": symbol,
                 "side": side.upper(),
+                "type": "LIMIT",
                 "quantity": quantity,
                 "price": price,
-                "stopPrice": stop_price,
-                "stopLimitPrice": stop_limit_price,
-                "stopLimitTimeInForce": stop_limit_time_in_force,
+                "timeInForce": "GTC"
             }
             
             if client_order_id:
-                order_params["newClientOrderId"] = client_order_id
+                limit_order_params["newClientOrderId"] = f"{client_order_id}_limit"
             
-            # Place OCO order
-            response = self.client.client.futures_create_oco_order(**order_params)
+            # Place limit order
+            limit_response = self.client.client.futures_create_order(**limit_order_params)
+            
+            # Then, place the stop order (stop loss)
+            stop_order_params = {
+                "symbol": symbol,
+                "side": "SELL" if side.upper() == "BUY" else "BUY",  # Opposite side for stop loss
+                "type": "STOP_MARKET",
+                "quantity": quantity,
+                "stopPrice": stop_price
+            }
+            
+            if client_order_id:
+                stop_order_params["newClientOrderId"] = f"{client_order_id}_stop"
+            
+            # Place stop order
+            stop_response = self.client.client.futures_create_order(**stop_order_params)
+            
+            # Combine responses for OCO-like behavior
+            response = {
+                "orderListId": f"oco_{limit_response.get('orderId', 0)}_{stop_response.get('orderId', 0)}",
+                "listOrderStatus": "EXECUTING",
+                "transactionTime": limit_response.get('updateTime', 0),
+                "limitOrder": limit_response,
+                "stopOrder": stop_response
+            }
             
             logger.info(
                 "oco_order",
@@ -102,25 +127,27 @@ class OCOOrder:
                 quantity=quantity,
                 price=price,
                 stop_price=stop_price,
+                limit_order_id=limit_response.get('orderId'),
+                stop_order_id=stop_response.get('orderId'),
                 response=response
             )
             
             # Convert response to OrderResponse format
-            # OCO orders return a different structure, so we adapt it
+            # OCO orders are implemented as separate orders, so we adapt the response
             order_response = OrderResponse(
-                order_id=response.get('orderListId', 0),
+                order_id=limit_response.get('orderId', 0),  # Use limit order ID as primary
                 symbol=symbol,
-                status=response.get('listOrderStatus', 'UNKNOWN'),
+                status=limit_response.get('status', 'UNKNOWN'),
                 side=side.upper(),
                 order_type="OCO",
                 quantity=str(quantity),
                 price=str(price),
                 stop_price=str(stop_price),
-                time_in_force=stop_limit_time_in_force,
-                executed_qty="0",
-                avg_price=None,
+                time_in_force="GTC",
+                executed_qty=limit_response.get('executedQty', "0"),
+                avg_price=limit_response.get('avgPrice'),
                 client_order_id=client_order_id,
-                transact_time=response.get('transactionTime', 0)
+                transact_time=limit_response.get('updateTime', 0)
             )
             
             return order_response
